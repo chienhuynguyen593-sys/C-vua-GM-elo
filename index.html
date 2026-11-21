@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>GRANDMASTER ARENA</title>
+<style>
+:root{
+  --bg:#0b0f14;--card:#131922;--card2:#1b2432;--line:#283447;
+  --txt:#f3f6fa;--mut:#94a3b8;--acc:#10b981;--warn:#f59e0b;--bad:#ef4444;
+  --light:#ebecd0;--dark:#739552;--hi:#f6f669;--last:rgba(246,246,105,.45);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--txt);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+}
+button,select{font:inherit;cursor:pointer}
+.top{
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
+  padding:10px 14px;background:#10151d;border-bottom:1px solid var(--line);
+}
+.brand{font-weight:800;font-size:15px}
+.top-r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{
+  background:var(--card2);border:1px solid var(--line);color:var(--txt);
+  border-radius:999px;padding:5px 11px;font-size:12px;font-weight:700;
+}
+.main{
+  max-width:1160px;margin:14px auto;padding:0 12px 28px;
+  display:grid;grid-template-columns:minmax(290px,min(62vw,620px)) minmax(280px,1fr);gap:14px;
+}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.p-name{font-weight:700;font-size:14px}
+.p-sub{font-size:12px;color:var(--mut)}
+.clk{
+  font-family:ui-monospace,Consolas,monospace;font-size:19px;font-weight:700;
+  background:#090d12;border:1px solid var(--line);border-radius:8px;padding:5px 10px;min-width:86px;text-align:center;
+}
+.clk.act{border-color:var(--acc);color:#6ee7b7}
+.clk.low{border-color:var(--bad);color:#fca5a5}
+.msg{
+  margin:8px 0;padding:8px 10px;border-radius:8px;
+  background:var(--card2);border-left:3px solid var(--acc);font-size:12.5px;line-height:1.4;
+}
+.board-wrap{display:grid;grid-template-columns:12px 1fr;gap:6px;margin:8px 0}
+.ev-track{background:#1e293b;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+.ev-bar{width:100%;height:50%;background:#f8fafc;transition:height .2s}
+.board{
+  width:100%;aspect-ratio:1/1;
+  display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);
+  border:2px solid #334155;border-radius:6px;overflow:hidden;user-select:none;
+}
+.sq{
+  border:0;padding:0;margin:0;position:relative;display:grid;place-items:center;
+  font-size:clamp(22px,6vw,52px);line-height:1;
+}
+.sq.l{background:var(--light)}.sq.d{background:var(--dark)}
+.sq.sel{background:var(--hi)!important}
+.sq.last::after{content:"";position:absolute;inset:0;background:var(--last);pointer-events:none}
+.sq.chk{background:#dc2626!important}
+.piece{pointer-events:none;z-index:2}
+.piece.w{color:#ffffff;text-shadow:0 0 2px #000,0 1px 2px #000}
+.piece.b{color:#111827;text-shadow:0 0 1px #fff}
+.dot{width:26%;height:26%;border-radius:50%;background:rgba(15,23,42,.32);z-index:3;pointer-events:none}
+.sq.occ .dot{width:84%;height:84%;background:transparent;border:3px solid rgba(15,23,42,.35)}
+.side{display:grid;gap:12px;align-content:start}
+h2{margin:0 0 10px;font-size:14px}
+.fld{margin-bottom:9px}
+.fld label{display:block;font-size:12px;color:var(--mut);margin-bottom:4px}
+.fld select,.fld input[type=range]{width:100%}
+.fld select{
+  background:var(--card2);color:var(--txt);border:1px solid var(--line);
+  border-radius:8px;padding:7px 9px;font-size:12.5px;
+}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.btn{
+  background:var(--card2);color:var(--txt);border:1px solid var(--line);
+  border-radius:8px;padding:8px 10px;font-size:12.5px;font-weight:700;
+}
+.btn.on{border-color:var(--acc);background:#0f2920;color:#a7f3d0}
+.btn.pri{background:var(--acc);color:#052e16;border-color:var(--acc)}
+.btn.bad{background:#2a1215;color:#fca5a5;border-color:#5c2127}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.log{
+  max-height:150px;overflow-y:auto;background:#0b0f15;border:1px solid var(--line);
+  border-radius:8px;padding:7px;font-family:ui-monospace,Consolas,monospace;font-size:12px;
+  display:grid;grid-template-columns:34px 1fr 1fr;gap:3px 6px;
+}
+.log .cur{background:#17352b;color:#6ee7b7;border-radius:4px;padding:2px 5px}
+.log span{padding:2px 5px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0;text-align:center}
+.st{background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:6px 4px}
+.st b{display:block;font-size:13px}.st small{font-size:10px;color:var(--mut)}
+.alist{max-height:150px;overflow-y:auto;display:grid;gap:4px;margin-top:6px;font-size:12px}
+.arow{display:flex;justify-content:space-between;background:#0b0f15;border:1px solid #1e293b;padding:5px 8px;border-radius:6px}
+@media(max-width:840px){
+  .main{grid-template-columns:1fr;max-width:600px}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">♞ GRANDMASTER ARENA</div>
+  <div class="top-r">
+    <button type="button" class="pill" id="sndBtn">🔊 Âm thanh: Bật</button>
+    <span class="pill" id="aiStatus">AI: Đang tải Stockfish...</span>
+  </div>
+</div>
+
+<div class="main">
+  <div class="box">
+    <div class="row">
+      <div>
+        <div class="p-name">Stockfish 17.1 <span id="aiElo" style="color:#fbbf24">(~1500 Elo)</span></div>
+        <div class="p-sub" id="aiSub">Cấp độ 6/18</div>
+      </div>
+      <div class="clk" id="topClk">10:00</div>
+    </div>
+
+    <div class="msg" id="taunt">Sẵn sàng! Chọn quân và đi nước đầu tiên đi bro.</div>
+
+    <div class="board-wrap">
+      <div class="ev-track"><div class="ev-bar" id="evBar"></div></div>
+      <div class="board" id="board"></div>
+    </div>
+
+    <div class="row">
+      <div>
+        <div class="p-name">Bạn <span id="youSide" style="color:#6ee7b7">(Quân Trắng)</span></div>
+        <div class="p-sub" id="turnTxt">Lượt Trắng</div>
+      </div>
+      <div class="clk act" id="botClk">10:00</div>
+    </div>
+
+    <div class="row" style="margin-top:8px;font-size:12px;color:var(--mut)">
+      <span id="gameState">Đang chơi</span>
+      <span id="evTxt" style="font-family:ui-monospace,Consolas,monospace;color:#f8fafc;font-weight:700">0.0</span>
+    </div>
+  </div>
+
+  <div class="side">
+    <div class="box">
+      <h2>⚙️ Thiết lập</h2>
+      <div class="fld">
+        <label for="lv">Độ khó: <b id="lvTxt">Cấp 6 / 18 (~1500 Elo)</b></label>
+        <input type="range" id="lv" min="1" max="18" value="6">
+      </div>
+      <div class="fld">
+        <label>Phe của bạn</label>
+        <div class="g3" id="sideBtns">
+          <button type="button" class="btn on" data-s="w">♔ Trắng</button>
+          <button type="button" class="btn" data-s="random">🎲 Ngẫu nhiên</button>
+          <button type="button" class="btn" data-s="b">♚ Đen</button>
+        </div>
+      </div>
+      <div class="g2 fld">
+        <div>
+          <label for="tc">Thời gian</label>
+          <select id="tc">
+            <option value="60">1 phút</option>
+            <option value="180">3 phút</option>
+            <option value="300">5 phút</option>
+            <option value="600" selected>10 phút</option>
+          </select>
+        </div>
+        <div>
+          <label for="persona">Tính cách AI</label>
+          <select id="persona">
+            <option value="savage" selected>Cà khịa gắt 🔥</option>
+            <option value="fun">Vui vẻ 😄</option>
+            <option value="pro">Nghiêm túc 🧠</option>
+          </select>
+        </div>
+      </div>
+      <div class="g2">
+        <button type="button" class="btn pri" id="newBtn">⚡ Ván mới</button>
+        <button type="button" class="btn" id="undoBtn">↶ Đi lại</button>
+        <button type="button" class="btn" id="flipBtn">⇅ Xoay bàn</button>
+        <button type="button" class="btn bad" id="resignBtn">🏳️ Đầu hàng</button>
+      </div>
+    </div>
+
+    <div class="box">
+      <h2>📜 Nước đi (<span id="mCnt">0</span>)</h2>
+      <div class="log" id="log"><span>—</span><span>Chưa có nước đi</span></div>
+    </div>
+
+    <div class="box">
+      <h2>📊 Phân tích ván đấu</h2>
+      <button type="button" class="btn pri" id="anBtn" style="width:100%" disabled>🔍 Phân tích ngay</button>
+      <div id="anStatus" class="p-sub" style="margin-top:6px"></div>
+      <div id="anOut"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(()=>{
+/* ================= BỘ LUẬT CỜ VUA THUẦN JS ================= */
+const FILES = "abcdefgh";
+const GLYPH = {
+  wK:"♔",wQ:"♕",wR:"♖",wB:"♗",wN:"♘",wP:"♙",
+  bK:"♚",bQ:"♛",bR:"♜",bB:"♝",bN:"♞",bP:"♟"
+};
+const VAL = {p:100,n:320,b:330,r:500,q:900,k:0};
+const ELOS = [800,950,1100,1250,1380,1500,1620,1750,1880,2000,2130,2260,2400,2550,2700,2850,3000,3150];
+const SF_URLS = [
+  "https://cdn.jsdelivr.net/npm/stockfish@17.1.0/bin/stockfish-17.1-lite-single-03e3232.js",
+  "https://unpkg.com/stockfish@17.1.0/bin/stockfish-17.1-lite-single-03e3232.js"
+];
+const LINES = {
+  savage:{
+    start:["Nãy giờ mới chịu vào à? Để xem đánh được bao lâu.","Mời bro đi trước, đừng để thua sớm nhé."],
+    capAi:["Cảm ơn quân cờ miễn phí nha!","Mình xin nhẹ quân này cho đỡ chật bàn."],
+    chkAi:["Chiếu! Vua của bro bắt đầu đổ mồ hôi rồi đó."],
+    chkYou:["À, cũng biết chiếu cơ à? Chưa xi nhê đâu."],
+    norm:["Nước đi cũng tạm đấy bro.","Mình tính đường xa rồi, cứ từ từ."],
+    winAi:["Chiếu hết rồi! Đi ăn xong luyện thêm rồi quay lại nhé 😎"],
+    winYou:["Uầy, hôm nay bro đánh căng thật!"]
+  },
+  fun:{
+    start:["Bàn cờ lên rồi, chiến thôi bro ơi!"],
+    capAi:["Ối, mình nhận quân này nha!"],
+    chkAi:["Chiếu tướng nè!"],
+    chkYou:["Pha chiếu hay quá!"],
+    norm:["Đang vào form nè!"],
+    winAi:["Mình thắng ván này rồi, làm lại ván mới nha!"],
+    winYou:["Bro đánh đỉnh quá!"]
+  },
+  pro:{
+    start:["Trận đấu bắt đầu."],
+    capAi:["Đã ăn quân."],
+    chkAi:["Chiếu Vua."],
+    chkYou:["Chiếu Vua chính xác."],
+    norm:["Đang tính toán tiếp."],
+    winAi:["Chiếu hết. Kết thúc ván."],
+    winYou:["Bạn đã thắng."]
+  }
+};
+
+function sqToRC(sq){
+  return {r: 8 - Number(sq[1]), c: FILES.indexOf(sq[0])};
+}
+function rcToSq(r, c){
+  if(r < 0 || r > 7 || c < 0 || c > 7) return null;
+  return FILES[c] + (8 - r);
+}
+function cloneBoard(b){
+  return b.map(row => row.map(cell => cell ? {...cell} : null));
+}
+function initialState(){
+  const b = Array.from({length:8}, ()=>Array(8).fill(null));
+  const back = ["r","n","b","q","k","b","n","r"];
+  for(let c=0;c<8;c++){
+    b[0][c] = {color:"b", type:back[c]};
+    b[1][c] = {color:"b", type:"p"};
+    b[6][c] = {color:"w", type:"p"};
+    b[7][c] = {color:"w", type:"r"};
+  }
+  b[7][1]={color:"w",type:"n"}; b[7][2]={color:"w",type:"b"}; b[7][3]={color:"w",type:"q"};
+  b[7][4]={color:"w",type:"k"}; b[7][5]={color:"w",type:"b"}; b[7][6]={color:"w",type:"n"}; b[7][7]={color:"w",type:"r"};
+  return {
+    board:b,
+    turn:"w",
+    castling:{wK:true,wQ:true,bK:true,bQ:true},
+    ep:null,
+    half:0,
+    full:1
+  };
+}
+function findKing(board, color){
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+    const p = board[r][c];
+    if(p && p.color === color && p.type === "k") return {r,c};
+  }
+  return null;
+}
+function isAttacked(board, tr, tc, byColor){
+  // Tốt
+  const pDir = byColor === "w" ? 1 : -1;
+  for(const dc of [-1, 1]){
+    const pr = tr + pDir, pc = tc + dc;
+    if(pr>=0 && pr<8 && pc>=0 && pc<8){
+      const p = board[pr][pc];
+      if(p && p.color === byColor && p.type === "p") return true;
+    }
+  }
+  // Mã
+  const kMoves = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+  for(const [dr,dc] of kMoves){
+    const nr = tr+dr, nc = tc+dc;
+    if(nr>=0 && nr<8 && nc>=0 && nc<8){
+      const p = board[nr][nc];
+      if(p && p.color === byColor && p.type === "n") return true;
+    }
+  }
+  // Vua
+  for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+    if(!dr && !dc) continue;
+    const nr = tr+dr, nc = tc+dc;
+    if(nr>=0 && nr<8 && nc>=0 && nc<8){
+      const p = board[nr][nc];
+      if(p && p.color === byColor && p.type === "k") return true;
+    }
+  }
+  // Tượng / Hậu (chéo)
+  const diag = [[-1,-1],[-1,1],[1,-1],[1,1]];
+  for(const [dr,dc] of diag){
+    let nr = tr+dr, nc = tc+dc;
+    while(nr>=0 && nr<8 && nc>=0 && nc<8){
+      const p = board[nr][nc];
+      if(p){
+        if(p.color === byColor && (p.type === "b" || p.type === "q")) return true;
+        break;
+      }
+      nr += dr; nc += dc;
+    }
+  }
+  // Xe / Hậu (thẳng)
+  const ortho = [[-1,0],[1,0],[0,-1],[0,1]];
+  for(const [dr,dc] of ortho){
+    let nr = tr+dr, nc = tc+dc;
+    while(nr>=0 && nr<8 && nc>=0 && nc<8){
+      const p = board[nr][nc];
+      if(p){
+        if(p.color === byColor && (p.type === "r" || p.type === "q")) return true;
+        break;
+      }
+      nr += dr; nc += dc;
+    }
+  }
+  return false;
+}
+function inCheck(st, color){
+  const k = findKing(st.board, color);
+  if(!k) return false;
+  return isAttacked(st.board, k.r, k.c, color === "w" ? "b" : "w");
+}
+function pseudoMoves(st, color){
+  const res = [], b = st.board;
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+    const p = b[r][c];
+    if(!p || p.color !== color) continue;
+    const from = rcToSq(r,c);
+    if(p.type === "p"){
+      const dir = color === "w" ? -1 : 1;
+      const startR = color === "w" ? 6 : 1;
+      const promR = color === "w" ? 0 : 7;
+      const r1 = r + dir;
+      if(r1>=0 && r1<8 && !b[r1][c]){
+        const to = rcToSq(r1,c);
+        if(r1 === promR) for(const pr of ["q","r","b","n"]) res.push({from,to,promotion:pr});
+        else res.push({from,to});
+        const r2 = r + dir*2;
+        if(r === startR && !b[r2][c]){
+          res.push({from, to:rcToSq(r2,c), epSet:rcToSq(r1,c)});
+        }
+      }
+      for(const dc of [-1,1]){
+        const nc = c + dc;
+        if(r1>=0 && r1<8 && nc>=0 && nc<8){
+          const to = rcToSq(r1,nc);
+          const tgt = b[r1][nc];
+          if(tgt && tgt.color !== color){
+            if(r1 === promR) for(const pr of ["q","r","b","n"]) res.push({from,to,promotion:pr,captured:tgt.type});
+            else res.push({from,to,captured:tgt.type});
+          } else if(st.ep === to){
+            res.push({from,to,epCap:rcToSq(r,nc),captured:"p"});
+          }
+        }
+      }
+    } else if(p.type === "n"){
+      for(const [dr,dc] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]){
+        const to = rcToSq(r+dr, c+dc);
+        if(!to) continue;
+        const tgt = b[r+dr][c+dc];
+        if(!tgt || tgt.color !== color) res.push({from,to,...(tgt?{captured:tgt.type}:{})});
+      }
+    } else if(p.type === "k"){
+      for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+        if(!dr && !dc) continue;
+        const to = rcToSq(r+dr, c+dc);
+        if(!to) continue;
+        const tgt = b[r+dr][c+dc];
+        if(!tgt || tgt.color !== color) res.push({from,to,...(tgt?{captured:tgt.type}:{})});
+      }
+      // Nhập thành
+      const opp = color === "w" ? "b" : "w";
+      if(color === "w" && r===7 && c===4 && !isAttacked(b,7,4,opp)){
+        if(st.castling.wK && !b[7][5] && !b[7][6] && b[7][7]?.type==="r" && !isAttacked(b,7,5,opp) && !isAttacked(b,7,6,opp)){
+          res.push({from:"e1",to:"g1",castle:"wK"});
+        }
+        if(st.castling.wQ && !b[7][3] && !b[7][2] && !b[7][1] && b[7][0]?.type==="r" && !isAttacked(b,7,3,opp) && !isAttacked(b,7,2,opp)){
+          res.push({from:"e1",to:"c1",castle:"wQ"});
+        }
+      }
+      if(color === "b" && r===0 && c===4 && !isAttacked(b,0,4,opp)){
+        if(st.castling.bK && !b[0][5] && !b[0][6] && b[0][7]?.type==="r" && !isAttacked(b,0,5,opp) && !isAttacked(b,0,6,opp)){
+          res.push({from:"e8",to:"g8",castle:"bK"});
+        }
+        if(st.castling.bQ && !b[0][3] && !b[0][2] && !b[0][1] && b[0][0]?.type==="r" && !isAttacked(b,0,3,opp) && !isAttacked(b,0,2,opp)){
+          res.push({from:"e8",to:"c8",castle:"bQ"});
+        }
+      }
+    } else {
+      const dirs = p.type === "b" ? [[-1,-1],[-1,1],[1,-1],[1,1]]
+                 : p.type === "r" ? [[-1,0],[1,0],[0,-1],[0,1]]
+                 : [[-1,-1],[-1,1],[1,-1],[1,1],[-1,0],[1,0],[0,-1],[0,1]];
+      for(const [dr,dc] of dirs){
+        let nr = r+dr, nc = c+dc;
+        while(nr>=0 && nr<8 && nc>=0 && nc<8){
+          const to = rcToSq(nr,nc), tgt = b[nr][nc];
+          if(!tgt){ res.push({from,to}); }
+          else {
+            if(tgt.color !== color) res.push({from,to,captured:tgt.type});
+            break;
+          }
+          nr += dr; nc += dc;
+        }
+      }
+    }
+  }
+  return res;
+}
+function applyMove(st, mv){
+  const ns = {
+    board:cloneBoard(st.board),
+    turn:st.turn === "w" ? "b" : "w",
+    castling:{...st.castling},
+    ep:null,
+    half:st.half + 1,
+    full:st.turn === "b" ? st.full + 1 : st.full
+  };
+  const f = sqToRC(mv.from), t = sqToRC(mv.to);
+  const piece = ns.board[f.r][f.c];
+  ns.board[f.r][f.c] = null;
+  if(mv.epCap){
+    const epC = sqToRC(mv.epCap);
+    ns.board[epC.r][epC.c] = null;
+  }
+  ns.board[t.r][t.c] = {...piece, type: mv.promotion || piece.type};
+  if(mv.castle === "wK"){ ns.board[7][5] = ns.board[7][7]; ns.board[7][7] = null; }
+  if(mv.castle === "wQ"){ ns.board[7][3] = ns.board[7][0]; ns.board[7][0] = null; }
+  if(mv.castle === "bK"){ ns.board[0][5] = ns.board[0][7]; ns.board[0][7] = null; }
+  if(mv.castle === "bQ"){ ns.board[0][3] = ns.board[0][0]; ns.board[0][0] = null; }
+
+  if(piece.type === "p" || mv.captured) ns.half = 0;
+  if(mv.epSet) ns.ep = mv.epSet;
+  if(piece.type === "k"){
+    if(piece.color === "w"){ ns.castling.wK = false; ns.castling.wQ = false; }
+    else { ns.castling.bK = false; ns.castling.bQ = false; }
+  }
+  if(mv.from === "h1" || mv.to === "h1") ns.castling.wK = false;
+  if(mv.from === "a1" || mv.to === "a1") ns.castling.wQ = false;
+  if(mv.from === "h8" || mv.to === "h8") ns.castling.bK = false;
+  if(mv.from === "a8" || mv.to === "a8") ns.castling.bQ = false;
+  return ns;
+}
+function legalMoves(st, fromSq){
+  const list = pseudoMoves(st, st.turn);
+  const out = [];
+  for(const m of list){
+    if(fromSq && m.from !== fromSq) continue;
+    const nxt = applyMove(st, m);
+    if(!inCheck(nxt, st.turn)) out.push(m);
+  }
+  return out;
+}
+function toFen(st){
+  const rows = [];
+  for(let r=0;r<8;r++){
+    let row = "", empty = 0;
+    for(let c=0;c<8;c++){
+      const p = st.board[r][c];
+      if(!p){ empty++; }
+      else {
+        if(empty){ row += empty; empty = 0; }
+        const ch = p.type;
+        row += p.color === "w" ? ch.toUpperCase() : ch;
+      }
+    }
+    if(empty) row += empty;
+    rows.push(row);
+  }
+  let cs = "";
+  if(st.castling.wK) cs += "K";
+  if(st.castling.wQ) cs += "Q";
+  if(st.castling.bK) cs += "k";
+  if(st.castling.bQ) cs += "q";
+  if(!cs) cs = "-";
+  return `${rows.join("/")} ${st.turn} ${cs} ${st.ep || "-"} ${st.half} ${st.full}`;
+}
+function makeSan(st, mv, nxt){
+  if(mv.castle === "wK" || mv.castle === "bK") return "O-O" + (inCheck(nxt, nxt.turn) ? "+" : "");
+  if(mv.castle === "wQ" || mv.castle === "bQ") return "O-O-O" + (inCheck(nxt, nxt.turn) ? "+" : "");
+  const f = sqToRC(mv.from), p = st.board[f.r][f.c];
+  const isCap = Boolean(mv.captured || mv.epCap);
+  let s = "";
+  if(p.type === "p"){
+    if(isCap) s += mv.from[0] + "x";
+    s += mv.to;
+    if(mv.promotion) s += "=" + mv.promotion.toUpperCase();
+  } else {
+    s += p.type.toUpperCase();
+    const amb = legalMoves(st).filter(x => x.to === mv.to && x.from !== mv.from && st.board[sqToRC(x.from).r][sqToRC(x.from).c]?.type === p.type);
+    if(amb.length){
+      if(!amb.some(x => x.from[0] === mv.from[0])) s += mv.from[0];
+      else if(!amb.some(x => x.from[1] === mv.from[1])) s += mv.from[1];
+      else s += mv.from;
+    }
+    if(isCap) s += "x";
+    s += mv.to;
+  }
+  if(legalMoves(nxt).length === 0 && inCheck(nxt, nxt.turn)) s += "#";
+  else if(inCheck(nxt, nxt.turn)) s += "+";
+  return s;
+}
+function simpleEvalCp(st){
+  // Trả về điểm theo góc nhìn phe đang tới lượt (st.turn)
+  let score = 0;
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+    const p = st.board[r][c];
+    if(!p) continue;
+    const v = VAL[p.type] || 0;
+    const center = (3.5 - Math.abs(r - 3.5)) + (3.5 - Ma
