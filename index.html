@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#18251e">
+<title>C-vua-GM-elo 3.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#111a15;--surface:#1b2820;--surface2:#24342a;--line:#34483a;--text:#f2f5ef;--muted:#a7b5a8;--green:#91c66b;--green2:#6eaa4c;--cream:#f0ead8;--wood:#78966b;--gold:#e7bd69}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% -20%,#2b4933 0,transparent 48%),var(--bg);color:var(--text);font-family:"DM Sans",system-ui,sans-serif;min-height:100vh}
+button,select{font:inherit}button{cursor:pointer}
+.topbar{height:66px;border-bottom:1px solid #ffffff12;background:#111a15d9;display:flex;align-items:center;justify-content:space-between;padding:0 max(18px,calc((100vw - 1180px)/2));position:sticky;top:0;z-index:5;backdrop-filter:blur(14px)}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:.2px}
+.logo{width:38px;height:38px;border-radius:12px;background:var(--green);color:#172319;display:grid;place-items:center;font-size:25px}
+.brand small{display:block;font-size:10px;color:var(--muted);font-weight:600;letter-spacing:1.5px}
+.pill{font-size:12px;color:#c7dfb8;border:1px solid #54764d;border-radius:99px;padding:7px 11px}
+main{max-width:1180px;margin:25px auto;padding:0 18px;display:grid;grid-template-columns:minmax(320px, min(66vw,720px)) minmax(280px,1fr);gap:22px;align-items:start}
+.board-card,.card{background:linear-gradient(145deg,#203027,#19251e);border:1px solid var(--line);border-radius:18px;box-shadow:0 16px 45px #0003}
+.board-card{padding:16px}
+.player{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:5px 2px 12px}
+.player-info{display:flex;align-items:center;gap:10px;min-width:0}
+.avatar{width:38px;height:38px;border-radius:12px;background:#314537;display:grid;place-items:center;font-size:21px}
+.player-name{font-weight:700;font-size:14px}
+.player-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.clock{font-variant-numeric:tabular-nums;font-size:23px;font-weight:800;letter-spacing:.5px;background:#101813;border:1px solid #405346;border-radius:10px;padding:7px 12px;min-width:91px;text-align:center}
+.clock.active{border-color:var(--green);color:#d9f4c8;box-shadow:0 0 0 2px #91c66b20}
+.board{width:100%;aspect-ratio:1/1;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);overflow:hidden;border-radius:7px;touch-action:manipulation;user-select:none;background:#24342a}
+.sq{border:0;border-radius:0;position:relative;display:grid;place-items:center;padding:0;margin:0;width:100%;height:100%;min-width:0;min-height:0;color:#fff}
+.sq.light{background:var(--cream)}
+.sq.dark{background:var(--wood)}
+.sq.selected{background:#c8d96b!important}
+.sq.last:after{content:"";position:absolute;inset:0;background:#e9df5870;pointer-events:none}
+.sq.check{background:#d66b58!important}
+.piece{font-family:"DejaVu Sans","Segoe UI Symbol","Apple Color Emoji",serif;font-size:clamp(26px,6.2vw,62px);line-height:1;z-index:1;filter:drop-shadow(0 2px 1px #0006);pointer-events:none}
+.piece.white{color:#fff;text-shadow:0 1px 2px #333,1px 0 #333,-1px 0 #333,0 -1px #333}
+.piece.black{color:#20251f;text-shadow:0 1px 1px #fff5}
+.coord{position:absolute;font-size:clamp(8px,1.2vw,11px);font-weight:700;z-index:2;opacity:.8;pointer-events:none}
+.coord.rank{top:2px;left:4px}
+.coord.file{right:4px;bottom:1px}
+.light .coord{color:#607c50}
+.dark .coord{color:#f2ead9}
+.dot{position:absolute;width:26%;height:26%;border-radius:50%;background:#1a251c66;z-index:2;
