@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<title>GRANDMASTER ARENA · Stockfish 17.1</title>
+<style>
+:root{
+  --bg:#0b0f14;--panel:#131922;--panel-2:#1a222e;--border:#263142;
+  --text:#f3f6fa;--muted:#8e9bb0;--accent:#10b981;--gold:#f59e0b;
+  --danger:#ef4444;--light:#ebecd0;--dark:#739552;--sel:#f5f682;--last:rgba(245,246,130,.48);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;min-height:100vh;color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:radial-gradient(circle at 15% -10%,#152922 0%,transparent 42%),
+             radial-gradient(circle at 85% 0%,#1c2236 0%,transparent 40%),var(--bg);
+}
+button,select,input{font:inherit}
+button{cursor:pointer}
+.nav{
+  height:62px;position:sticky;top:0;z-index:20;
+  background:rgba(11,15,20,.92);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 max(14px,calc((100vw - 1200px)/2));
+}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{
+  width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+  background:linear-gradient(135deg,#10b981,#059669);color:#06140e;font-size:21px;font-weight:800;
+}
+.b-title{font-size:15px;font-weight:800}
+.b-sub{font-size:11px;color:var(--muted);font-weight:600}
+.nav-r{display:flex;align-items:center;gap:8px}
+.chip{
+  font-size:11px;font-weight:700;padding:6px 11px;border-radius:99px;
+  background:var(--panel-2);border:1px solid var(--border);color:#cbd5e1;
+  display:flex;align-items:center;gap:6px;
+}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+.dot.on{background:var(--accent)}
+.wrap{
+  max-width:1200px;margin:18px auto;padding:0 14px 32px;
+  display:grid;grid-template-columns:minmax(300px,min(64vw,670px)) minmax(300px,1fr);
+  gap:18px;align-items:start;
+}
+.arena{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:14px}
+.p-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 2px}
+.p-l{display:flex;align-items:center;gap:10px;min-width:0}
+.avatar{
+  width:40px;height:40px;border-radius:12px;background:var(--panel-2);
+  border:1px solid var(--border);display:grid;place-items:center;font-size:20px;flex-shrink:0;
+}
+.p-name{font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tag{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;font-weight:700;
+  background:#1f2937;color:#fbbf24;padding:2px 7px;border-radius:6px;border:1px solid #374151;
+}
+.p-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.clock{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:21px;font-weight:700;
+  background:#090d12;border:1px solid var(--border);color:#94a3b8;
+  border-radius:11px;padding:7px 13px;min-width:92px;text-align:center;
+}
+.clock.act{background:#0f291e;border-color:var(--accent);color:#ecfdf5}
+.clock.low{background:#2b1114;border-color:var(--danger);color:#fecaca}
+.taunt{
+  margin:10px 0;min-height:42px;padding:9px 12px;border-radius:12px;
+  background:linear-gradient(90deg,#182232,#141b26);border:1px solid #2b384d;
+  border-left:3px solid var(--accent);font-size:12.5px;line-height:1.45;color:#e2e8f0;
+  display:flex;align-items:center;gap:9px;
+}
+.stage{display:grid;grid-template-columns:14px 1fr;gap:8px;margin:10px 0}
+.eval-bar{
+  background:#1e293b;border:1px solid var(--border);border-radius:99px;
+  overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;
+}
+.eval-fill{width:100%;height:50%;background:#f8fafc;transition:height .25s ease}
+.board{
+  width:100%;aspect-ratio:1/1;min-height:280px;
+  display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);
+  border-radius:10px;overflow:hidden;user-select:none;touch-action:manipulation;
+}
+.sq{border:0;padding:0;margin:0;position:relative;display:grid;place-items:center}
+.sq.light{background:var(--light)}
+.sq.dark{background:var(--dark)}
+.sq.sel{background:var(--sel)!important}
+.sq.last::after{content:"";position:absolute;inset:0;background:var(--last);pointer-events:none}
+.sq.chk{background:radial-gradient(circle,#ef4444 15%,#b91c1c 85%)!important}
+.piece{
+  font-size:clamp(24px,6.2vw,56px);line-height:1;z-index:2;pointer-events:none;
+  font-family:"Apple Color Emoji","Segoe UI Symbol","Noto Color Emoji",sans-serif;
+}
+.piece.w{color:#fff;text-shadow:0 1px 2px #000,0 0 2px #000}
+.piece.b{color:#111827;text-shadow:0 1px 1px rgba(255,255,255,.45)}
+.coord{position:absolute;font-size:10px;font-weight:800;z-index:1;pointer-events:none;opacity:.85}
+.coord.r{top:2px;left:4px}.coord.f{bottom:1px;right:4px}
+.light .coord{color:#5c7a40}.dark .coord{color:#ebecd0}
+.dot-hint{width:28%;height:28%;border-radius:50%;background:rgba(15,23,42,.28);z-index:3;pointer-events:none}
+.sq.has-p .dot-hint{width:86%;height:86%;background:transparent;border:4px solid rgba(15,23,42,.28)}
+.b-meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);padding-top:6px}
+.eval-pill{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;color:#f8fafc;
+  background:var(--panel-2);border:1px solid var(--border);padding:3px 9px;border-radius:7px;
+}
+.side{display:grid;gap:14px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:15px}
+.c-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.c-head h2{margin:0;font-size:14px;font-weight:800}
+.slider-box{background:var(--panel-2);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:12px}
+.slider-top{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:8px}
+.slider-val{color:var(--accent);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field label{display:block;font-size:11px;color:var(--muted);font-weight:600;margin-bottom:5px}
+.field select{
+  width:100%;background:var(--panel-2);color:var(--text);border:1px solid var(--border);
+  border-radius:10px;padding:9px 10px;font-size:12.5px;font-weight:600;outline:none;
+}
+.side-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.side-btn{
+  background:var(--panel-2);border:1px solid var(--border);color:var(--muted);
+  border-radius:9px;padding:8px 4px;font-size:12px;font-weight:700;
+}
+.side-btn.act{background:#112e24;border-color:var(--accent);color:#ecfdf5}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.btn{
+  border:1px solid var(--border);background:var(--panel-2);color:var(--text);
+  border-radius:11px;padding:10px 12px;font-size:12.5px;font-weight:700;
+}
+.btn.pri{background:linear-gradient(135deg,#10b981,#059669);border:none;color:#051b11;font-weight:800}
+.btn.dan{color:#fca5a5;border-color:#451a1d;background:#241215}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.moves{
+  max-height:170px;overflow-y:auto;display:grid;grid-template-columns:36px 1fr 1fr;gap:3px 6px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;
+  background:#0d1219;border:1px solid var(--border);border-radius:11px;padding:8px;
+}
+.moves span{padding:4px 6px;border-radius:5px}
+.moves .num{color:#64748b}.moves .now{background:#1e3a2f;color:#6ee7b7;font-weight:700}
+.sum-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
+.stat{background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:7px 4px;text-align:center}
+.stat b{display:block;font-size:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.stat small{font-size:10px;color:var(--muted)}
+.acc-box{
+  background:linear-gradient(90deg,#112e24,#172536);border:1px solid #264d3e;border-radius:11px;
+  padding:9px 12px;margin-top:10px;display:flex;justify-content:space-between;align-items:center;
+  font-size:12px;font-weight:700;
+}
+.acc-val{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:16px;color:var(--accent)}
+.a-list{max-height:175px;overflow-y:auto;margin-top:8px;display:grid;gap:4px;font-size:12px}
+.a-row{
+  display:flex;justify-content:space-between;align-items:center;
+  background:#0e131b;border:1px solid #1e293b;padding:6px 9px;border-radius:8px;
+}
+.badge{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px}
+.b1{background:#064e3b;color:#6ee7b7}.b2{background:#1e3a5f;color:#93c5fd}
+.b3{background:#451a03;color:#fcd34d}.b4{background:#431407;color:#fdba74}.b5{background:#450a0a;color:#fca5a5}
+@media(max-width:860px){
+  .wrap{grid-template-columns:1fr;max-width:620px;margin:12px auto;padding:0 10px 24px;gap:14px}
+  .arena{padding:11px;border-radius:16px}
+}
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="brand">
+    <div class="logo">♞</div>
+    <div>
+      <div class="b-title">GRANDMASTER ARENA</div>
+      <div class="b-sub">STOCKFISH 17.1 ENGINE · PRO EDITION</div>
+    </div>
+  </div>
+  <div class="nav-r">
+    <button class="chip" id="soundBtn" type="button">🔊 Âm thanh</button>
+    <div class="chip"><span class="dot" id="dot"></span><span id="badge">Đang tải AI…</span></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="arena">
+    <div class="p-bar">
+      <div class="p-l">
+        <div class="avatar">🤖</div>
+        <div>
+          <div class="p-name">Stockfish 17.1 <span class="tag" id="opElo">~1500 ELO</span></div>
+          <div class="p-sub" id="opSub">Cấp độ 6/18 · Sẵn sàng</div>
+        </div>
+      </div>
+      <div class="clock" id="topClock">10:00</div>
+    </div>
+
+    <div class="taunt">
+      <span>💬</span>
+      <span id="tauntText">Bàn cờ đã sẵn sàng! Chọn quân rồi bấm Ván mới để chiến nhé.</span>
+    </div>
+
+    <div class="stage">
+      <div class="eval-bar"><div class="eval-fill" id="evalFill"></div></div>
+      <div class="board" id="board"></div>
+    </div>
+
+    <div class="p-bar">
+      <div class="p-l">
+        <div class="avatar">👑</div>
+        <div>
+          <div class="p-name">Bạn <span class="tag" id="youTag">QUÂN TRẮNG</span></div>
+          <div class="p-sub" id="youSub">Lượt của bạn</div>
+        </div>
+      </div>
+      <div class="clock act" id="botClock">10:00</div>
+    </div>
+
+    <div class="b-meta">
+      <span id="status">Trắng đi trước</span>
+      <span class="eval-pill" id="evalText">0.0</span>
+    </div>
+  </section>
+
+  <aside class="side">
+    <section class="card">
+      <div class="c-head"><h2>⚙️ Thiết lập trận đấu</h2></div>
+      <div class="slider-box">
+        <div class="slider-top">
+          <span>Độ khó Stockfish</span>
+          <span class="slider-val" id="lvLabel">Cấp 6 / 18 (~1500 Elo)</span>
+        </div>
+        <input type="range" id="level" min="1" max="18" value="6">
+      </div>
+      <div class="field" style="margin-bottom:10px">
+        <label>Bạn cầm quân</label>
+        <div class="side-btns" id="sideGroup">
+          <button type="button" class="side-btn act" data-s="w">♔ Trắng</button>
+          <button type="button" class="side-btn" data-s="random">🎲 Ngẫu nhiên</button>
+          <button type="button" class="side-btn" data-s="b">♚ Đen</button>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="timeCtrl">Thời gian</label>
+          <select id="timeCtrl">
+            <option value="60|0">1 phút</option>
+            <option value="180|0">3 phút</option>
+            <option value="300|0">5 phút</option>
+            <option value="600|0" selected>10 phút</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="persona">Tính cách AI</label>
+          <select id="persona">
+            <option value="savage" selected>Cà khịa gắt 🔥</option>
+            <option value="fun">Vui vẻ 😄</option>
+            <option value="pro">Nghiêm túc 🧠</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn pri" id="newBtn">⚡ Ván mới</button>
+        <button type="button" class="btn" id="undoBtn">↶ Đi lại</button>
+        <button type="button" class="btn" id="flipBtn">⇅ Xoay bàn cờ</button>
+        <button type="button" class="btn dan" id="resignBtn">🏳️ Đầu hàng</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="c-head"><h2>📜 Biên bản nước đi</h2><span style="font-size:11px;color:var(--muted)" id="mCount">0 nước</span></div>
+      <div class="moves" id="moves"><span>—</span><span>Chưa có nước đi</span></div>
+    </section>
+
+    <section class="card">
+      <div class="c-head"><h2>📊 Phân tích ván đấu</h2></div>
+      <button type="button" class="btn pri" id="analyzeBtn" style="width:100%" disabled>🔍 Phân tích ngay</button>
+      <div id="aStatus" style="font-size:11.5px;color:var(--muted);margin-top:8px"></div>
+      <div id="aResult"></div>
+    </section>
+  </aside>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chess.js@0.10.3/chess.min.js"></script>
+<script>
+(()=>{
+  const $ = id => document.getElementById(id);
+  const GLYPH = {wK:"♔",wQ:"♕",wR:"♖",wB:"♗",wN:"♘",wP:"♙",bK:"♚",bQ:"♛",bR:"♜",bB:"♝",bN:"♞",bP:"♟"};
+  const INIT = {
+    a8:{color:"b",type:"r"},b8:{color:"b",type:"n"},c8:{color:"b",type:"b"},d8:{color:"b",type:"q"},
+    e8:{color:"b",type:"k"},f8:{color:"b",type:"b"},g8:{color:"b",type:"n"},h8:{color:"b",type:"r"},
+    a7:{color:"b",type:"p"},b7:{color:"b",type:"p"},c7:{color:"b",type:"p"},d7:{color:"b",type:"p"},
+    e7:{color:"b",type:"p"},f7:{color:"b",type:"p"},g7:{color:"b",type:"p"},h7:{color:"b",type:"p"},
+    a2:{color:"w",type:"p"},b2:{color:"w",type:"p"},c2:{color:"w",type:"p"},d2:{color:"w",type:"p"},
+    e2:{color:"w",type:"p"},f2:{color:"w",type:"p"},g2:{color:"w",type:"p"},h2:{color:"w",type:"p"},
+    a1:{color:"w",type:"r"},b1:{color:"w",type:"n"},c1:{color:"w",type:"b"},d1:{color:"w",type:"q"},
+    e1:{color:"w",type:"k"},f1:{color:"w",type:"b"},g1:{color:"w",type:"n"},h1:{color:"w",type:"r"}
+  };
+  const ELOS = [800,950,1100,1250,1380,1500,1620,1750,1880,2000,2130,2260,2400,2550,2700,2850,3000,3150];
+  const SF_URLS = [
+    "https://cdn.jsdelivr.net/npm/stockfish@17.1.0/bin/stockfish-17.1-lite-single-03e3232.js",
+    "https://unpkg.com/stockfish@17.1.0/bin/stockfish-17.1-lite-single-03e3232.js"
+  ];
+  const TAUNTS = {
+    savage:{
+      start:["Nghe đồn bạn tự tin lắm? Để xem trụ được mấy nước trước Stockfish!","Đừng đổ lỗi cho lag nhé, mời bạn đi trước."],
+      capAi:["Cảm ơn món quà miễn phí này nhé!","Quân này đứng đây hơi thừa, mình dọn giúp cho gọn."],
+      chkAi:["Chiếu! Vua của bạn bắt đầu thấy ngột ngạt chưa?"],
+      chkYou:["Ồ, cũng biết chiếu Vua cơ à? Nhưng chưa đủ làm khó đâu."],
+      norm:["Nước đi cũng tạm đấy… với người mới chơi.","Mình tính trước vài nước rồi, cứ bình tĩnh."],
+      winAi:["Chiếu hết! Luyện thêm rồi quay lại phục thù nhé 😎"],
+      winYou:["Ảo thật đấy! Hôm nay bạn đánh như lên đồng vậy!"]
+    },
+    fun:{
+      start:["Bàn cờ đã sẵn sàng, chiến thôi bạn ơi!"],
+      capAi:["Ối, mình xin nhẹ quân này nhé!"],
+      chkAi:["Chiếu tướng nè!"],
+      chkYou:["Pha chiếu hay đấy!"],
+      norm:["Thế trận đang hay nè!"],
+      winAi:["Ván này mình thắng rồi, làm lại ván nữa không?"],
+      winYou:["Quá đỉnh luôn bạn ơi!"]
+    },
+    pro:{
+      start:["Trận đấu bắt đầu."],
+      capAi:["Đã giành lợi thế quân."],
+      chkAi:["Chiếu Vua."],
+      chkYou:["Nước chiếu chính xác."],
+      norm:["Đang tính toán phương án tiếp theo."],
+      winAi:["Chiếu hết. Hết ván."],
+      winYou:["Chiến thắng thuộc về bạn."]
+    }
+  };
+
+  let sound = true, ctx = null;
+  function playTone(type){
+    if(!sound) return;
+    try{
+      if(!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime;
+      o.connect(g); g.connect(ctx.destination);
+      o.type = type === "chk" ? "sawtooth" : type === "cap" ? "triangle" : "sine";
+      o.frequency.setValueAtTime(type === "chk" ? 520 : type === "cap" ? 190 : 320, t);
+      g.gain.setValueAtTime(.15, t); g.gain.exponentialRampToValueAtTime(.01, t + .12);
+      o.start(t); o.stop(t + .13);
+    }catch(_){}
+  }
+
+  let game = typeof Chess === "function" ? new Chess() : null;
+  let sf = null, sfReady = false, sfBusy = false, aBusy = false;
+  let sidePref = "w", player = "w", flipped = false;
+  let sel = null, targets = [], last = null, hist = [];
+  let clocks = {w:600,b:600}, timer = null, ended = false, token = 0, mTimer = null, search = null;
+
+  const say = k => {
+    const pool = (TAUNTS[$("persona").value] && TAUNTS[$("persona").value][k]) || TAUNTS.savage.norm;
+    $("tauntText").textContent = pool[Math.floor(Math.random() * pool.length)];
+  };
+  const fmt = s => `${Math.floor(Math.max(0,s)/60)}:${String(Math.floor(Math.max(0,s)%60)).padStart(2,"0")}`;
+  const isOver = () => game ? (game.isGameOver ? game.isGameOver() : game.game_over()) : false;
+  const isChk = () => game ? (game.isCheck ? game.isCheck() : game.in_check()) : false;
+  const isMate = () => game ? (game.isCheckmate ? game.isCheckmate() : game.in_checkmate()) : false;
+
+  function updateLv(){
+    const lv = Number($("level").value), elo = ELOS[lv - 1] || 1500;
+    $("lvLabel").textContent = `Cấp ${lv} / 18 (~${elo} Elo)`;
+    $("opElo").textContent = `~${elo} ELO`;
+    $("opSub").textContent = `Cấp độ ${lv}/18 · ${sfReady ? "Sẵn sàng" : "Đang kết nối"}`;
+  }
+
+  function updateClocks(){
+    const topS = player === "w" ? "b" : "w", turn = game ? game.turn() : "w";
+    $("topClock").textContent = fmt(clocks[topS]);
+    $("botClock").textContent = fmt(clocks[player]);
+    $("topClock").classList.toggle("act", !ended && turn === topS);
+    $("botClock").classList.toggle("act", !ended && turn === player);
+    $("topClock").classList.toggle("low", clocks[topS] <= 15);
+    $("botClock").classList.toggle("low", clocks[player] <= 15);
+  }
+
+  function stopClock(){ if(timer){ clearInterval(timer); timer = null; } updateClocks(); }
+  function startClock(){
+    if(timer || ended || !game) return;
+    timer = setInterval(()=>{
+      if(ended || !game) return;
+      const t = game.turn();
+      clocks[t]--; updateClocks();
+      if(clocks[t] <= 0){
+        ended = true; stopClock();
+        $("status").textContent = (t === "w" ? "Trắng" : "Đen") + " hết giờ!";
+        say(t === player ? "winAi" : "winYou");
+        render();
+      }
+    }, 1000);
+    updateClocks();
+  }
+
+  function render(){
+    const el = $("board");
+    el.innerHTML = "";
+    const ranks = flipped ? [1,2,3,4,5,6,7,8] : [8,7,6,5,4,3,2,1];
+    const files = flipped ? ["h","g","f","e","d","c","b","a"] : ["a","b","c","d","e","f","g","h"];
+    const turn = game ? game.turn() : "w";
+
+    for(let r=0; r<8; r++){
+      for(let f=0; f<8; f++){
+        const sq = files[f] + ranks[r];
+        const p = game ? game.get(sq) : (INIT[sq] || null);
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "sq " + (((r+f)%2===0) ? "light" : "dark");
+        if(p) btn.classList.add("has-p");
+        if(sel === sq) btn.classList.add("sel");
+        if(last && (last.from === sq || last.to === sq)) btn.classList.add("last");
+        if(p && p.type === "k" && p.color === turn && isChk()) btn.classList.add("chk");
+
+        if(p){
+          const sp = document.createElement("span");
+          sp.className = "piece " + p.color;
+          sp.textContent = GLYPH[p.color + p.type.toUpperCase()] || "";
+          btn.append(sp);
+        }
+        if(f === 0){ const c = document.createElement("span"); c.className = "coord r"; c.textContent = ranks[r]; btn.append(c); }
+        if(r === 7){ const c = document.createElement("span"); c.className = "coord f"; c.textContent = files[f]; btn.append(c); }
+        if(targets.includes(sq)){ const d = document.createElement("span
