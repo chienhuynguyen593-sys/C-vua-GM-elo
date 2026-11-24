@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>C-vua-GM-elo Backup Chess</title>
+  <style>
+    /* Instant-load self-contained styles (zero external CDN dependencies) */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #0b1120;
+      color: #f8fafc;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px 16px;
+      gap: 10px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 540px;
+    }
+
+    /* Header & status bar */
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      background: rgba(251, 191, 36, 0.16);
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      color: #fcd34d;
+      font-weight: 800;
+      font-size: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: #f8fafc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brand-title span {
+      color: #38bdf8;
+    }
+
+    .brand-sub {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .btn {
+      border: 1px solid #334155;
+      background-color: #1e293b;
+      color: #f8fafc;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 13px;
+      border-radius: 12px;
+      padding: 9px 12px;
+      cursor: pointer;
+      transition: transform 90ms ease, background-color 120ms ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn:hover:not(:disabled) {
+      background-color: #293548;
+    }
+
+    .btn:active:not(:disabled) {
+      transform: scale(0.96);
+    }
+
+    .btn:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background-color: #059669;
+      border-color: #10b981;
+      color: #ffffff;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: #10b981;
+    }
+
+    .status-banner {
+      width: 100%;
+      padding: 9px 13px;
+      border-radius: 12px;
+      background-color: #162033;
+      border: 1px solid #293548;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+    }
+
+    .turn-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 9999px;
+      flex-shrink: 0;
+    }
+
+    .move-count {
+      color: #94a3b8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    /* Main board area */
+    .board-stage {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #boardContainer {
+      position: relative;
+      width: min(94vw, 520px, 62dvh);
+      height: min(94vw, 520px, 62dvh);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 3px solid #334155;
+      box-shadow: 0 20px 42px rgba(0, 0, 0, 0.68);
+      touch-action: none;
+    }
+
+    #chessBoard {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+    }
+
+    .square-btn {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      outline: none;
+      touch-action: none;
+    }
+
+    /* Balanced high-contrast classic tournament board squares so both White and Black pieces stand out cleanly */
+    .square-light {
+      background-color: #e8d5b5;
+      color: #7c5836;
+    }
+
+    .square-dark {
+      background-color: #8c6239;
+      color: #f3e6d0;
+    }
+
+    .sq-last-move-light {
+      background-color: #e5ca63;
+    }
+
+    .sq-last-move-dark {
+      background-color: #b59b32;
+    }
+
+    .sq-selected {
+      background-color: #4ade80 !important;
+    }
+
+    .sq-check {
+      background: radial-gradient(circle, #ef4444 0%, #dc2626 62%, #991b1b 100%) !important;
+    }
+
+    /* Legal move indicators */
+    .legal-dot::after {
+      content: "";
+      position: absolute;
+      width: 30%;
+      height: 30%;
+      border-radius: 9999px;
+      background-color: rgba(15, 23, 42, 0.42);
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .legal-capture::after {
+      content: "";
+      position: absolute;
+      inset: 7%;
+      border-radius: 9999px;
+      border: 4px solid rgba(15, 23, 42, 0.55);
+      background-color: transparent;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .coord-rank {
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1;
+      pointer-events: none;
+      opacity: 0.85;
+      z-index: 2;
+    }
+
+    .coord-file {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1;
+      pointer-events: none;
+      opacity: 0.85;
+      z-index: 2;
+    }
+
+    /* 100% Opaque, Solid, Ultra-Crisp Staunton SVG Pieces */
+    .chess-piece {
+      width: 88%;
+      height: 88%;
+      display: block;
+      opacity: 1 !important;
+      user-select: none;
+      touch-action: none;
+      pointer-events: none;
+      z-index: 2;
+      transition: transform 90ms ease-out;
+    }
+
+    .piece-white {
+      filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.48));
+    }
+
+    /* Crisp white outer halo + shadow ensures jet-black pieces pop sharply on dark squares too */
+    .piece-black {
+      filter:
+        drop-shadow(0 0 1.4px rgba(255, 255, 255, 0.95))
+        drop-shadow(0 2px 2.5px rgba(0, 0, 0, 0.65));
+    }
+
+    .square-btn:hover .chess-piece {
+      transform: scale(1.04);
+    }
+
+    /* Floating drag preview */
+    #dragPreview {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 72px;
+      height: 72px;
+      pointer-events: none;
+      z-index: 60;
+      transform: translate(-9999px, -9999px);
+      will-change: transform;
+    }
+
+    /* Footer controls */
+    .footer-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .level-card {
+      padding: 10px 13px;
+      border-radius: 14px;
+      background-color: #162033;
+      border: 1px solid #293548;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .level-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .level-badge {
+      padding: 2px 8px;
+      border-radius: 8px;
+      background: rgba(56, 189, 248, 0.18);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #38bdf8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+    }
+
+    .elo-badge {
+      color: #fcd34d;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .step-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      background-color: #1e293b;
+      color: #f8fafc;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-btn:active {
+      transform: scale(0.94);
+    }
+
+    input[type="range"].level-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 9999px;
+      background: #334155;
+      outline: none;
+    }
+
+    input[type="range"].level-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 9999px;
+      background: #38bdf8;
+      border: 3px solid #f8fafc;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+    }
+
+    input[type="range"].level-slider::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 9999px;
+      background: #38bdf8;
+      border: 3px solid #f8fafc;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+    }
+
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(2, 6, 23, 0.78);
+      padding: 16px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 340px;
+      border-radius: 18px;
+      background-color: #1e293b;
+      border: 1px solid #475569;
+      padding: 18px;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.7);
+      text-align: center;
+    }
+
+    .promo-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .promo-btn {
+      aspect-ratio: 1;
+      border-radius: 12px;
+      background-color: #334155;
+      border: 1px solid #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      cursor: pointer;
+    }
+
+    .promo-btn:hover {
+      background-color: #475569;
+    }
+
+    .gameover-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .gameover-actions .btn {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header & Game Status -->
+  <header class="container">
+    <div class="header-top">
+      <div class="brand">
+        <span class="brand-icon">♔</span>
+        <div style="min-width: 0;">
+          <h1 class="brand-title">C-vua-GM-elo <span>Backup</span></h1>
+          <p class="brand-sub">Chạy offline tức thì • AI Level 1–18</p>
+        </div>
+      </div>
+
+      <button id="sideToggleBtn" type="button" class="btn" title="Đổi bên Trắng / Đen">
+        Bạn: <span id="playerSideLabel" style="color: #fcd34d;">Trắng</span>
+      </button>
+    </div>
+
+    <div class="status-banner">
+      <div class="status-left">
+        <span id="turnDot" class="turn-dot" style="background-color: #fcd34d;"></span>
+        <span id="gameStatusLabel">Lượt của bạn (Trắng đi trước)</span>
+      </div>
+      <span id="moveCountLabel" class="move-count">Nước: 1</span>
+    </div>
+  </header>
+
+  <!-- Center Chessboard -->
+  <main class="board-stage">
+    <div id="boardContainer">
+      <div id="chessBoard"></div>
+    </div>
+  </main>
+
+  <!-- Bottom Controls -->
+  <footer class="container footer-stack">
+    <div class="level-card">
+      <div class="level-header">
+        <label for="levelSlider" style="display: flex; align-items: center; gap: 6px;">
+          <span>Stockfish / AI</span>
+          <span id="levelBadge" class="level-badge">Lv 8</span>
+        </label>
+        <span id="eloEstimate" class="elo-badge">~1650 Elo</span>
+      </div>
+
+      <div class="slider-row">
+        <button id="levelDecBtn" type="button" class="step-btn" aria-label="Giảm cấp độ">−</button>
+        <input id="levelSlider" type="range" min="1" max="18" value="8" step="1" class="level-slider" />
+        <button id="levelIncBtn" type="button" class="step-btn" aria-label="Tăng cấp độ">+</button>
+      </div>
+    </div>
+
+    <div class="actions-grid">
+      <button id="newGameBtn" type="button" class="btn btn-primary">Ván mới</button>
+      <button id="undoBtn" type="button" class="btn">Đi lại</button>
+      <button id="flipBtn" type="button" class="btn">Xoay bàn</button>
+    </div>
+  </footer>
+
+  <!-- Floating Drag Preview -->
+  <div id="dragPreview"></div>
+
+  <!-- Pawn Promotion Modal -->
+  <div id="promotionModal" class="modal-backdrop">
+    <div class="modal-card">
+      <h2 style="margin: 0; font-size: 16px; font-weight: 800;">Phong cấp Tốt</h2>
+      <div id="promotionChoices" class="promo-grid"></div>
+    </div>
+  </div>
+
+  <!-- Game Over Modal -->
+  <div id="gameOverModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div id="gameOverIcon" style="font-size: 38px; line-height: 1.1;">🏆</div>
+      <h2 id="gameOverTitle" style="margin: 8px 0 4px; font-size: 19px; font-weight: 800;">Kết thúc ván đấu</h2>
+      <p id="gameOverDesc" style="margin: 0; font-size: 14px; color: #cbd5e1;"></p>
+      <div class="gameover-actions">
+        <button id="closeGameOverBtn" type="button" class="btn">Xem bàn cờ</button>
+        <button id="playAgainBtn" type="button" class="btn btn-primary">Chơi ván mới</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * C-vua-GM-elo Backup Chess
+     * 100% self-contained offline chess game with solid high-contrast Staunton SVG pieces,
+     * complete chess rules, tap + drag/swipe movement, and fast 1-18 level AI.
+     */
+
+    // =========================================================================
+    // 1. CONSTANTS & 100% SOLID STAUNTON SVG CHESS PIECES
+    // =========================================================================
+    const WHITE = 'w';
+    const BLACK = 'b';
+
+    const LEVEL_ELO = {
+      1: 800, 2: 920, 3: 1050, 4: 1180, 5: 1300, 6: 1420,
+      7: 1540, 8: 1650, 9: 1760, 10: 1870, 11: 1980, 12: 2090,
+      13: 2200, 14: 2310, 15: 2420, 16: 2530, 17: 2650, 18: 2800
+    };
+
+    const PIECE_VALUES = {
+      p: 100,
+      n: 320,
+      b: 335,
+      r: 500,
+      q: 900,
+      k: 20000
+    };
+
+    const PST = {
+      p: [
+        [0,  0,  0,  0,  0,  0,  0,  0],
+        [50, 50, 50, 50, 50, 50, 50, 50],
+        [10, 10, 20, 30, 30, 20, 10, 10],
+        [5,  5, 10, 27, 27, 10,  5,  5],
+        [0,  0,  0, 24, 24,  0,  0,  0],
+        [5, -5,-10,  0,  0,-10, -5,  5],
+        [5, 10, 10,-20,-20, 10, 10,  5],
+        [0,  0,  0,  0,  0,  0,  0,  0]
+      ],
+      n: [
+        [-50,-40,-30,-30,-30,-30,-40,-50],
+        [-40,-20,  0,  0,  0,  0,-20,-40],
+        [-30,  0, 10, 15, 15, 10,  0,-30],
+        [-30,  5, 15, 20, 20, 15,  5,-30],
+        [-30,  0, 15, 20, 20, 15,  0,-30],
+        [-30,  5, 10, 15, 15, 10,  5,-30],
+        [-40,-20,  0,  5,  5,  0,-20,-40],
+        [-50,-40,-30,-30,-30,-30,-40,-50]
+      ],
+      b: [
+        [-20,-10,-10,-10,-10,-10,-10,-20],
+        [-10,  0,  0,  0,  0,  0,  0,-10],
+        [-10,  0,  5, 10, 10,  5,  0,-10],
+        [-10,  5,  5, 10, 10,  5,  5,-10],
+        [-10,  0, 10, 10, 10, 10,  0,-10],
+        [-10, 10, 10, 10, 10, 10, 10,-10],
+        [-10,  5,  0,  0,  0,  0,  5,-10],
+        [-20,-10,-10,-10,-10,-10,-10,-20]
+      ],
+      r: [
+        [0,  0,  0,  0,  0,  0,  0,  0],
+        [5, 10, 10, 10, 10, 10, 10,  5],
+        [-5,  0,  0,  0,  0,  0,  0, -5],
+        [-5,  0,  0,  0,  0,  0,  0, -5],
+        [-5,  0,  0,  0,  0,  0,  0, -5],
+        [-5,  0,  0,  0,  0,  0,  0, -5],
+        [-5,  0,  0,  0,  0,  0,  0, -5],
+        [0,  0,  0,  5,  5,  0,  0,  0]
+      ],
+      q: [
+        [-20,-10,-10, -5, -5,-10,-10,-20],
+        [-10,  0,  0,  0,  0,  0,  0,-10],
+        [-10,  0,  5,  5,  5,  5,  0,-10],
+        [-5,   0,  5,  5,  5,  5,  0, -5],
+        [0,    0,  5,  5,  5,  5,  0, -5],
+        [-10,  5,  5,  5,  5,  5,  0,-10],
+        [-10,  0,  5,  0,  0,  0,  0,-10],
+        [-20,-10,-10, -5, -5,-10,-10,-20]
+      ],
+      k: [
+        [-30,-40,-40,-50,-50,-40,-40,-30],
+        [-30,-40,-40,-50,-50,-40,-40,-30],
+        [-30,-40,-40,-50,-50,-40,-40,-30],
+        [-30,-40,-40,-50,-50,-40,-40,-30],
+        [-20,-30,-30,-40,-40,-30,-30,-20],
+        [-10,-20,-20,-20,-20,-20,-20,-10],
+        [20,  20,  0,  0,  0,  0, 20, 20],
+        [20,  30, 10,  0,  0, 10, 30, 20]
+      ]
+    };
+
+    /**
+     * Generates 100% solid, opaque, bold Staunton SVG pieces.
+     * - White pieces: pure bright ivory/white (#ffffff) fill with thick dark charcoal (#111827) outline & trim.
+     * - Black pieces: solid jet-black (#0b0f19) fill with crisp bright white/ivory (#f8fafc) outer rim and inner carved lines
+     *   so every black piece is unmistakable and high-contrast even on dark brown squares.
+     */
+    function createPieceSVG(piece) {
+      if (!piece) return '';
+      const isWhite = piece.color === WHITE;
+      const cls = isWhite ? 'chess-piece piece-white' : 'chess-piece piece-black';
+
+      if (isWhite) {
+        const fill = '#ffffff';
+        const stroke = '#111827';
+        const sw = '2.4';
+
+        switch (piece.type) {
+          case 'p':
+            return `
+              <svg viewBox="0 0 45 45" class="${cls}" aria-hidden="true">
+                <path d="M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z"
+                  fill="${fill}" fill-opacity="1" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>`;
+          case 'r':
+            return `
+              <svg viewBox="0 0 45 45" class="${cls}" aria-hidden="true">
+                <g fill="${fill}" fill-opacity="1" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 39h27v-3H9v3zM12 36v-4h21v4H12zM11 14V9h4v2h5V9h5v2h5V9h4v5" stroke-linejoin="miter"/>
+                  <path d="M34 14l-3 3H14l-3-3"/>
+                  <path d="M31 17v12.5H14V17"/>
+                  <path d="M31 29.5l1.5 2.5h-20l1.5-2.5"/>
+                  <path d="M11 14h23" fill="none" stroke-linejoin="miter"/>
+                </g>
+              </svg>`;
+          case 'n':
+            return `
+              <svg viewBox="0 0 45 45" class="${cls}" aria-hidden="true">
+                <g fill="${fill}" fill-opacity="1" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 10c10.5 1 16.5 8 16 29H15c0-9 10-6.5 8-21"/>
+                  <path d="M24 18c.38 2.91-5.55 7.37-8 9-3 2-2.82 4.34-5 4-1.042-.94 1.41-3.04 0-3-1 0 .19 1.23-1 2-1 0-4.003 1-4-4 0-2 6-12 6-12s1.89-1.9 2-3.5c-.73-.994-.5-2-.5-3 1-1 3 2.5 3 2.5h2s.78-1.992 2.5-3c1 0 1 3 1 3"/>
+                  <circle cx="15" cy="15.5" r="1.4" fill="${stroke}" stroke="none"/>
+                </g>
+              </svg>`;
+          case 'b':
+            return `
+              <svg viewBox="0 0 45 45" class="${cls}" aria-hidden="true">
+                <g fill="${fill}" fill-opacity="1" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.354.49-2.323.47-3-.5 1.354-1.94 3-2 3-2z"/>
+                  <path d="M15 32c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2z"/>
+                  <circle cx="22.5" cy="8" r="2
